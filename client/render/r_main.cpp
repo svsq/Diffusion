@@ -2252,6 +2252,8 @@ int HUD_RenderFrame( const ref_viewpass_t *rvp )
 
 	R_Animatex();
 
+	R_BeginSceneTarget();
+
 	// draw main view
 	R_RenderScene();
 
@@ -2275,6 +2277,8 @@ int HUD_RenderFrame( const ref_viewpass_t *rvp )
 		FSR();
 	else
 		DownScale();
+
+	R_PresentSceneTarget();
 
 	R_RestoreGLState();
 
