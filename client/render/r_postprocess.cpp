@@ -58,17 +58,8 @@ static GLuint pp_bloom_fbo;
 static GLuint pp_native_fbo;
 static int pp_cur;
 static bool pp_active;
-static void ( APIENTRY *pglTextureBarrierNV )( void );
 
 void RenderFSQ( int wide, int tall );
-
-// the macOS GL driver can let a pass sample a texture before the previous pass finished drawing into it,
-// the copies of the old path hid this because each one flushed the context
-static void PP_Barrier( void )
-{
-	if( pglTextureBarrierNV )
-		pglTextureBarrierNV();
-}
 
 static GLuint PP_CreateFBO( int color, int depth )
 {
@@ -115,10 +106,6 @@ static void InitSceneTarget( void )
 
 	if( !GL_Support( R_FRAMEBUFFER_OBJECT ))
 		return;
-
-	pglTextureBarrierNV = NULL;
-	if( Q_strstr( glConfig.extensions_string, "GL_NV_texture_barrier" ))
-		pglTextureBarrierNV = ( void ( APIENTRY * )( void ))GL_GetProcAddress( "glTextureBarrierNV" );
 
 	pp_depth = CREATE_TEXTURE( "*scenedepth", glState.width, glState.height, NULL, TF_DEPTHBUFFER );
 
@@ -172,7 +159,6 @@ void R_PresentSceneTarget( void )
 
 	GL_Setup2D();
 	GL_BindShader( NULL );
-	PP_Barrier();
 	GL_Bind( GL_TEXTURE0, pp_color[pp_cur] );
 	RenderFSQ( glState.width, glState.height );
 	GL_CleanUpTextureUnits( 0 );
@@ -188,7 +174,6 @@ static int PP_Capture( int texture, int unit )
 {
 	if( PP_Enabled( ))
 	{
-		PP_Barrier();
 		GL_Bind( unit, pp_color[pp_cur] );
 		return pp_color[pp_cur];
 	}
@@ -203,7 +188,6 @@ static int PP_CaptureDepth( int unit )
 	if( !PP_Enabled( ))
 		return PP_Capture( tr.screen_depth, unit );
 
-	PP_Barrier();
 	GL_Bind( unit, pp_depth );
 	return pp_depth;
 }
@@ -215,7 +199,6 @@ static void PP_CaptureInto( int texture, GLuint fbo, int unit )
 		pglBindFramebuffer( GL_FRAMEBUFFER_EXT, fbo );
 		pglViewport( 0, 0, glState.width, glState.height );
 		GL_BindShader( NULL );
-		PP_Barrier();
 		GL_Bind( GL_TEXTURE0, pp_color[pp_cur] );
 		RenderFSQ( glState.width, glState.height );
 		pglBindFramebuffer( GL_FRAMEBUFFER_EXT, R_MainFramebuffer( ));
@@ -1497,8 +1480,6 @@ void FSR( void )
 	RenderFSQ( w, h );
 
 	// get native full screen copy
-	if( scene )
-		PP_Barrier();
 	GL_Bind( GL_TEXTURE0, upscaled );
 	if( scene )
 	{
