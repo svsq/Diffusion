@@ -572,6 +572,11 @@ void R_CheckChanges( void )
 		R_VidInit();
 		ClearBits( gl_renderscale->flags, FCVAR_CHANGED );
 	}
+	// the window can move to a display with another resolution, e.g. a Mac going from the built-in Retina to an external one
+	else if( glState.width != (int)( RENDER_GET_PARM( PARM_SCREEN_WIDTH, 0 ) * tr.renderscale ) || glState.height != (int)( RENDER_GET_PARM( PARM_SCREEN_HEIGHT, 0 ) * tr.renderscale ))
+	{
+		R_VidInit();
+	}
 
 	if( FBitSet( gl_texture_nearest->flags, FCVAR_CHANGED ) )
 	{
