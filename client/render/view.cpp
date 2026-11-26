@@ -455,8 +455,8 @@ void V_Init( void )
 	room_type_auto = CVAR_REGISTER( "room_type_auto", "0", FCVAR_ARCHIVE );
 	r_decals_ext = CVAR_REGISTER( "r_decals_ext", "1", FCVAR_ARCHIVE );
 	gl_fsr = CVAR_REGISTER( "gl_fsr", "0", FCVAR_ARCHIVE );
-#ifdef __APPLE__
-	// every screen copy flushes the Metal command buffer there, ping-ponging avoids them
+#if defined( __APPLE__ ) || ( defined( __linux__ ) && !defined( __ANDROID__ ))
+	// screen copies from the window are expensive there (Metal flushes its command buffer, Mesa is much slower too), ping-ponging avoids them
 	gl_scenefbo = CVAR_REGISTER( "gl_scenefbo", "1", FCVAR_ARCHIVE );
 #else
 	gl_scenefbo = CVAR_REGISTER( "gl_scenefbo", "0", FCVAR_ARCHIVE );
